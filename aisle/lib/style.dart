@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class SetColors {
   static const background = const Color(0xFFF2F2F2);
@@ -40,7 +41,25 @@ var Loader = Container(child: SpinKitRotatingCircle(
   color: Colors.black,
   size: 50.0,
 ),color: SetColors.buttonBackground,);
-var userData = {};
+
+cachedImage(BuildContext context, String link,double height, double width)
+{
+  return CachedNetworkImage(
+    height: height,
+    width: width,
+    fit: BoxFit.fill,
+    imageUrl: link,
+    placeholder: (context,url) => Center(child: CircularProgressIndicator(),),
+    errorWidget: (context,url,error) => Icon(
+      Icons.error,
+      color: Colors.red,
+      size: 50,
+    ),
+  );
+}
+
+var userData;
+var toLoad = userData == null ? true : false;
 var home_notification_number = "50";
 var notes_notificatio_number = "12";
 var matches_notification_number = "50+";

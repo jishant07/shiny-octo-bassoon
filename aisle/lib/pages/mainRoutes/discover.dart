@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class Discover extends StatefulWidget {
   const Discover({Key key}) : super(key: key);
@@ -16,18 +17,19 @@ class Discover extends StatefulWidget {
 class _DiscoverState extends State<Discover> {
 
   bool isLoading = true;
+  var currentYear;
   void getHttp() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     try {
       Dio _dio = new Dio();
-      print(await prefs.getString("token"));
-      _dio.options.headers["Authorization"] = await prefs.getString("token");
+      //print(await prefs.getString("token"));
+      _dio.options.headers["Authorization"] = prefs.getString("token");
       var response = await _dio.get("https://testa2.aisle.co/V1/users/test_profile_list");
-      print(response.data);
       this.setState(() {
         isLoading = false;
         userData = response.data;
       });
+      print(userData);
     } catch (e) {
       print(e);
     }
@@ -36,7 +38,11 @@ class _DiscoverState extends State<Discover> {
   @override
   void initState() {
     super.initState();
-    if(userData == {})
+    this.setState(() {
+      currentYear = DateTime.parse(DateTime.now().toString()).year;
+      print(currentYear);
+    });
+    if(toLoad)
     {
       getHttp();
     }
@@ -52,6 +58,7 @@ class _DiscoverState extends State<Discover> {
       backgroundColor: SetColors.background,
       body: isLoading ? Loader : Scaffold(body:
         SingleChildScrollView(
+          primary: true,
           physics: BouncingScrollPhysics(),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal:16),
@@ -70,14 +77,14 @@ class _DiscoverState extends State<Discover> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: Image(image: AssetImage("lib/assets/photo_1.png"),height: MediaQuery.of(context).size.height*0.50,width: MediaQuery.of(context).size.width,fit: BoxFit.fitWidth,),
+                        child: Image(image: NetworkImage(userData['invites']['profiles'][0]['photos'][0]['photo']),height: MediaQuery.of(context).size.height*0.50,width: MediaQuery.of(context).size.width,fit: BoxFit.cover,),
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Text("Meena, 23",style: TextTypes.light(Colors.white,24),),
+                            child: Text(userData['invites']['profiles'][0]['general_information']['first_name'] +" , "+ (currentYear - int.parse(userData['invites']['profiles'][0]['general_information']['date_of_birth'].split('-')[0])).toString(),style: TextTypes.light(Colors.white,24),),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 8),
@@ -128,79 +135,39 @@ class _DiscoverState extends State<Discover> {
                     ),
                   ),
                   SizedBox(height: 16,),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Flexible(flex: 1,child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: SizedBox(
-                          height: MediaQuery.of(context).size.height*0.3,
-                          child: Stack(
-                            alignment: AlignmentDirectional.bottomStart,
-                            fit: StackFit.expand,
-                            children: [
-                              ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image(image: AssetImage("lib/assets/photo_2.png"),
-                                    height: MediaQuery.of(context).size.height*0.3,
-                                    width:MediaQuery.of(context).size.width*0.5,
-                                    fit: BoxFit.cover,)),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10.0),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaY: 10,sigmaX: 10),
-                                  child: Container(
-                                    color: Colors.grey.withOpacity(0.1),
-                                  ),
-                                ),
+                  GridView.count(crossAxisCount: 2,shrinkWrap: true,
+                    crossAxisSpacing: 16.0,
+                    mainAxisSpacing: 8.0,
+                    childAspectRatio: 12/17,
+                    primary: false,
+                    children: userData['likes']['profiles'].map<Widget>((profile) => SizedBox(
+                      height: MediaQuery.of(context).size.height*0.3,
+                      child: Stack(
+                        alignment: AlignmentDirectional.bottomStart,
+                        fit: StackFit.expand,
+                        children: [
+                          ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image(image: NetworkImage(profile['avatar']),fit: BoxFit.cover,)),
+                          userData['likes']['can_see_profile'] == false ? ClipRRect(
+                            borderRadius: BorderRadius.circular(10.0),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaY: 10,sigmaX: 10),
+                              child: Container(
+                                color: Colors.grey.withOpacity(0.1),
                               ),
-                              Positioned(
-                                bottom: 0,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text("Teena",style: TextTypes.main(Colors.white,24),),
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),),
-                      Flexible(flex: 1,child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: SizedBox(
-                          height: MediaQuery.of(context).size.height*0.3,
-                          child: Stack(
-                            alignment: AlignmentDirectional.bottomStart,
-                            fit: StackFit.expand,
-                            children: [
-                              ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image(image: AssetImage("lib/assets/photo_3.png"),
-                                    height: MediaQuery.of(context).size.height*0.3,
-                                    width:MediaQuery.of(context).size.width*0.5,
-                                    fit: BoxFit.cover,)),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10.0),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaY: 10,sigmaX: 10),
-                                  child: Container(
-                                    color: Colors.grey.withOpacity(0.1),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text("Beena",style: TextTypes.main(Colors.white,24),),
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),),
-                    ],
-                  ),
+                            ),
+                          ):null,
+                          Positioned(
+                            bottom: 0,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(profile['first_name'],style: TextTypes.main(Colors.white,24),),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),).toList(),),
                 ],
               ),
             ),
